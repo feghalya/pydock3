@@ -57,7 +57,7 @@ def system_call(command_str, cwd=os.getcwd(), timeout_seconds=None, env_vars_dic
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         timeout=timeout_seconds,
-        env=env_vars_dict,
+        env=None if env_vars_dict is None else {**os.environ, **env_vars_dict},
     )
     logger.debug(
         f"System call returned: {proc}\n\nstdout:{proc.stdout}\n\nstderr:{proc.stderr}\n"
