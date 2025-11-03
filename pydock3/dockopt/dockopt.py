@@ -799,19 +799,19 @@ class DockoptStep(PipelineComponent):
             while any(scheduler.job_is_on_queue(step_id) for _, step_id in steps_to_run_scheduler):
                 logger.info(f"Waiting for jobs to complete...")
                 time.sleep(15)
-            
+
             next_nodes = []
             for node in current_nodes:
                 for successor in g.successors(node):
                     in_degrees[successor] -= 1
                     if in_degrees[successor] == 0:
                         next_nodes.append(successor)
-            
+
             ready_nodes = deque(next_nodes)
 
 
     def run(
-            self, 
+            self,
             component_run_func_arg_set: DockoptPipelineComponentRunFuncArgSet,
             force_redock: bool,
             force_rewrite_results: bool,
@@ -1379,7 +1379,7 @@ class DockoptStepSequenceIteration(PipelineComponentSequenceIteration):
         self.graph = nx.DiGraph()
 
     def run(
-            self, 
+            self,
             component_run_func_arg_set: DockoptPipelineComponentRunFuncArgSet,
             force_redock: bool,
             force_rewrite_results: bool,
@@ -1499,7 +1499,7 @@ class DockoptStepSequence(PipelineComponentSequence):
         self.graph = nx.DiGraph()
 
     def run(
-            self, 
+            self,
             component_run_func_arg_set: DockoptPipelineComponentRunFuncArgSet,
             force_redock: bool,
             force_rewrite_results: bool,
@@ -1600,7 +1600,7 @@ class DockoptPipeline(Pipeline):
         self.graph = nx.DiGraph()
 
     def run(
-            self, 
+            self,
             component_run_func_arg_set: DockoptPipelineComponentRunFuncArgSet,
             force_redock: bool,
             force_rewrite_results: bool,

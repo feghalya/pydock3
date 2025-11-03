@@ -6,7 +6,7 @@ from itertools import groupby
 from operator import itemgetter
 import re
 from subprocess import CompletedProcess
-import xml
+import xml.parsers.expat
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -37,7 +37,7 @@ class JobScheduler(ABC):
             log_dir_path: str,
             task_ids: Iterable[Union[str, int]],
             job_timeout_minutes: Union[int, None] = None,
-            extra_submission_cmd_params_str: [str, None] = None
+            extra_submission_cmd_params_str: Union[str, None] = None
     ):
         """returns: subprocess.CompletedProcess"""
 
@@ -80,7 +80,7 @@ class SlurmJobScheduler(JobScheduler):
             log_dir_path: str,
             task_ids: Iterable[Union[str, int]],
             job_timeout_minutes: Union[int, None] = None,
-            extra_submission_cmd_params_str: [str, None] = None,
+            extra_submission_cmd_params_str: Union[str, None] = None,
     ) -> List[CompletedProcess]:
         #
         if extra_submission_cmd_params_str is None:
@@ -223,7 +223,7 @@ class LocalJobScheduler(JobScheduler):
             log_dir_path: str,
             task_ids: Iterable[Union[str, int]],
             job_timeout_minutes: Union[int, None] = None,
-            extra_submission_cmd_params_str: [str, None] = None,
+            extra_submission_cmd_params_str: Union[str, None] = None,
     ) -> List[CompletedProcess]:
         """
         Submit tasks using multiprocessing for parallel execution using
@@ -368,7 +368,7 @@ class SGEJobScheduler(JobScheduler):
             log_dir_path: str,
             task_ids: Iterable[Union[str, int]],
             job_timeout_minutes: Union[int, None] = None,
-            extra_submission_cmd_params_str: [str, None] = None,
+            extra_submission_cmd_params_str: Union[str, None] = None,
     ) -> List[CompletedProcess]:
         #
         if extra_submission_cmd_params_str is None:
