@@ -51,7 +51,7 @@ from pydock3.blastermaster.util import (
     BlasterStep,
 )
 from pydock3.jobs import ArrayDockingJob
-from pydock3.job_schedulers import SlurmJobScheduler, SGEJobScheduler
+from pydock3.job_schedulers import SlurmJobScheduler, SGEJobScheduler, LocalJobScheduler
 from pydock3.dockopt import __file__ as DOCKOPT_INIT_FILE_PATH
 from pydock3.retrodock.retrodock import log_job_submission_result, get_results_dataframe_from_actives_job_and_decoys_job_outdock_files, sort_by_energy_and_drop_duplicate_molecules
 from pydock3.blastermaster.util import DEFAULT_FILES_DIR_PATH
@@ -72,6 +72,7 @@ logger.setLevel(logging.DEBUG)
 SCHEDULER_NAME_TO_CLASS_DICT = {
     "sge": SGEJobScheduler,
     "slurm": SlurmJobScheduler,
+    "local": LocalJobScheduler,
 }
 
 #

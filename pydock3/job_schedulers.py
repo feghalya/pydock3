@@ -1,5 +1,5 @@
 import logging
-from typing import Union, List, Iterable
+from typing import Union, List, Iterable, Tuple
 import os
 from abc import ABC, abstractmethod
 from itertools import groupby
@@ -8,6 +8,7 @@ import re
 from subprocess import CompletedProcess
 import xml
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import xmltodict
 import pickle
@@ -150,9 +151,6 @@ class SlurmJobScheduler(JobScheduler):
         proc = system_call(f"{self.SBATCH_EXEC} {sub_script_path}")
 
         return proc
-        
-        
-
 
     def job_is_on_queue(self, job_name: str) -> bool:
         command_str = f"{self.SQUEUE_EXEC} --format='%i %j %t' | grep '{job_name}'"
@@ -180,6 +178,115 @@ class SlurmJobScheduler(JobScheduler):
                 if job_id.endswith(f"_{task_id}"):
                     return True
 
+        return False
+
+
+class LocalJobScheduler(JobScheduler):
+    REQUIRED_ENV_VAR_NAMES = []
+
+    def __init__(self) -> None:
+        super().__init__(name="Local")
+
+        try:
+            self.max_workers = len(os.sched_getaffinity(0))
+        except AttributeError:
+            self.max_workers = os.cpu_count()
+
+    def _run_task(self, task_id, script_path, env_vars_dict, job_id, log_dir_path):
+        """Helper function to run a single task - needed for multiprocessing"""
+
+        # Simulate a slurm environment by setting TASK_ID and JOB_ID for this task
+        task_env_vars = env_vars_dict.copy()
+        task_env_vars["TASK_ID"] = str(task_id)
+        task_env_vars["JOB_ID"] = str(job_id)
+
+        out_log_path = os.path.join(log_dir_path, f"{job_id}_{task_id}.out")
+        err_log_path = os.path.join(log_dir_path, f"{job_id}_{task_id}.err")
+
+        os.makedirs(log_dir_path, exist_ok=True)
+
+        # Run the script with the task-specific environment using env bash
+        proc = system_call(f"/usr/bin/env bash {script_path}", env_vars_dict=task_env_vars)
+
+        with open(out_log_path, 'w') as f:
+            f.write(proc.stdout or "")
+        with open(err_log_path, 'w') as f:
+            f.write(proc.stderr or "")
+
+        return proc
+
+    def submit(
+            self,
+            job_name: str,
+            script_path: str,
+            env_vars_dict: dict,
+            log_dir_path: str,
+            task_ids: Iterable[Union[str, int]],
+            job_timeout_minutes: Union[int, None] = None,
+            extra_submission_cmd_params_str: [str, None] = None,
+    ) -> List[CompletedProcess]:
+        """
+        Submit tasks using multiprocessing for parallel execution using
+        ProcessPoolExecutor.
+        """
+
+        if len(task_ids) == 1:
+            # For single task, run directly without multiprocessing overhead
+            proc = self._run_task(
+                task_ids[0],
+                script_path,
+                env_vars_dict,
+                job_name,
+                log_dir_path)
+
+            return [proc]
+
+        # Use multiprocessing for multiple tasks
+        procs = []
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_task = {}
+            for task_id in task_ids:
+                future = executor.submit(self._run_task,
+                    task_id,
+                    script_path,
+                    env_vars_dict,
+                    job_name,
+                    log_dir_path)
+
+                future_to_task[future] = task_id
+
+            for future in as_completed(future_to_task):
+                try:
+                    proc = future.result()
+                    procs.append(proc)
+                except Exception as e:
+                    # Create error process for failed tasks
+                    task_id = future_to_task[future]
+                    error_proc = CompletedProcess(
+                        args=[job_name],
+                        returncode=1,
+                        stdout="",
+                        stderr=f"Task {task_id} failed in python subprocess: {str(e)}"
+                    )
+                    procs.append(error_proc)
+
+        return procs
+
+    def submit_single_step(self, step_instance, job_name="blaster_step"):
+        try:
+            step_instance.run()
+            proc = CompletedProcess(args=[job_name], returncode=0, stdout="", stderr="")
+        except Exception as e:
+            proc = CompletedProcess(args=[job_name], returncode=1, stdout="", stderr=str(e))
+
+        return proc
+
+    def job_is_on_queue(self, job_name: str) -> bool:
+        # Local jobs run immediately, not queued
+        return False
+
+    def task_is_on_queue(self, task_id: Union[str, int], job_name: str) -> bool:
+        # Local jobs run immediately, not queued
         return False
 
 

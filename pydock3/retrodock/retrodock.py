@@ -24,7 +24,7 @@ from pydock3.criterion.enrichment.roc import ROC
 from pydock3.jobs import ArrayDockingJob, OUTDOCK_FILE_NAME
 from pydock3.blastermaster.blastermaster import BlasterFiles, BLASTER_FILE_IDENTIFIER_TO_PROPER_BLASTER_FILE_NAME_DICT
 from pydock3.jobs import JobSubmissionResult
-from pydock3.job_schedulers import SGEJobScheduler, SlurmJobScheduler
+from pydock3.job_schedulers import SGEJobScheduler, SlurmJobScheduler, LocalJobScheduler
 from pydock3.docking import __file__ as DOCKING_INIT_FILE_PATH
 
 #
@@ -41,6 +41,7 @@ DOCK3_EXECUTABLE_PATH = os.path.join(
 SCHEDULER_NAME_TO_CLASS_DICT = {
     "sge": SGEJobScheduler,
     "slurm": SlurmJobScheduler,
+    "local": LocalJobScheduler,
 }
 
 #
