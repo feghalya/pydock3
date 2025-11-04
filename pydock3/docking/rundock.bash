@@ -29,8 +29,18 @@ elif ( ! [ -z $JOB_ID ] ) && ( ! [ -z $SGE_TASK_ID ] ); then
 	SCHEDULER_NAME="sge"
 	#JOB_ID=$JOB_ID # already set by SGE
 	TASK_ID=$SGE_TASK_ID
+elif ( ! [ -z $JOB_ID ] ) && ( ! [ -z $TASK_ID ] ); then
+	SCHEDULER_NAME="local"
 else
 	echo "Scheduler job ID & task ID not found!"
+	exit 1
+fi
+
+# get scheduler-specific tmpdir (prioritize scheduler's tmpdir over generic TMPDIR)
+if ( ! [ -z $SLURM_TMPDIR ] ); then
+	TMPDIR=$SLURM_TMPDIR
+elif [ -z $TMPDIR ]; then
+	echo "No tmpdir found (checked SLURM_TMPDIR, TMPDIR)!"
 	exit 1
 fi
 
@@ -60,7 +70,7 @@ for var in EXPORT_DEST DOCKFILES TMPDIR ARRAY_JOB_DOCKING_CONFIGURATIONS INPUT_D
 done
 
 # initialize all our important variables & directories
-JOB_DIR=${TMPDIR}/$(whoami)/${SCHEDULER_NAME}_${JOB_ID}_${TASK_ID}
+JOB_DIR=${TMPDIR}/$(whoami)/$(echo ${SCHEDULER_NAME}_${JOB_ID} | md5sum | cut -c 1-5)_${TASK_ID}
 DOCKFILES_TEMP=$JOB_DIR/working/dockfiles
 
 #
@@ -78,7 +88,8 @@ mkdir -p $DOCKFILES_TEMP
 
 #
 mkdir -p $OUTPUT
-chmod -R 777 $OUTPUT
+find $OUTPUT -type d -exec chmod 750 {} \;
+find $OUTPUT -type f -exec chmod 640 {} \;
 
 # copy dockfiles
 awk "\$1==${TASK_ID}{for (j=2; j<=NF; j++) print \$j}" "$ARRAY_JOB_DOCKING_CONFIGURATIONS" | xargs -I {} cp {} "$DOCKFILES_TEMP"
@@ -198,7 +209,7 @@ function cleanup {
 
 	if $EXPORT_MOL2; then
 	  cp -p $JOB_DIR/working/test.mol2.gz $OUTPUT/test.mol2.gz.$nout
-  fi
+	fi
 	cp -p $LOG_OUT $OUTPUT/$nout.out
 	cp -p $LOG_ERR $OUTPUT/$nout.err
 
@@ -208,7 +219,8 @@ function cleanup {
 		rm $OUTPUT/restart
 	fi
 
-	chmod -R 777 $OUTPUT  # TODO: is this necessary? try to remove
+	find $OUTPUT -type d -exec chmod 750 {} \;
+	find $OUTPUT -type f -exec chmod 640 {} \;
 
 	rm -rf $JOB_DIR
 
