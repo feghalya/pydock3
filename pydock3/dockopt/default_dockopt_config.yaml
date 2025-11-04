@@ -37,7 +37,7 @@ definitions:
             residue_name: CYS
             residue_atoms: CA,CB,SG
           desolv_grid_gen:
-            submit_to_scheduler: True
+            submit_to_scheduler: false
         dock_files_modification:
           matching_spheres_perturbation:
             use: true
