@@ -126,7 +126,7 @@ class ArrayDockingJob(ABC):
             extra_submission_cmd_params_str=self.extra_submission_cmd_params_str,
         )
 
-        failed_procs = [proc for proc in procs if proc.stderr]
+        failed_procs = [proc for proc in procs if proc.returncode]
         if failed_procs:
             return JobSubmissionResult.FAILED, failed_procs
         else:
