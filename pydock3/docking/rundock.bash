@@ -79,8 +79,8 @@ log DOCKFILES_TEMP=$DOCKFILES_TEMP
 
 #
 OUTPUT=${EXPORT_DEST}/${TASK_ID}
-LOG_OUT=${TMPDIR}/${SCHEDULER_NAME}_${JOB_ID}_${TASK_ID}.out
-LOG_ERR=${TMPDIR}/${SCHEDULER_NAME}_${JOB_ID}_${TASK_ID}.err
+#LOG_OUT=${TMPDIR}/${SCHEDULER_NAME}_${JOB_ID}_${TASK_ID}.out
+#LOG_ERR=${TMPDIR}/${SCHEDULER_NAME}_${JOB_ID}_${TASK_ID}.err
 
 # create directories
 mkdir -p $JOB_DIR/working
@@ -210,8 +210,8 @@ function cleanup {
 	if $EXPORT_MOL2; then
 	  cp -p $JOB_DIR/working/test.mol2.gz $OUTPUT/test.mol2.gz.$nout
 	fi
-	cp -p $LOG_OUT $OUTPUT/$nout.out
-	cp -p $LOG_ERR $OUTPUT/$nout.err
+	#cp -p $LOG_OUT $OUTPUT/$nout.out
+	#cp -p $LOG_ERR $OUTPUT/$nout.err
 
 	if [ -f $JOB_DIR/working/restart ]; then
 		mv $JOB_DIR/working/restart $OUTPUT/restart
