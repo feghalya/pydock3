@@ -22,6 +22,11 @@ class ReceptorProtonationStep(BlasterStep):
         charged_receptor_outfile,
         reduce_options_parameter,
     ):
+        raise RuntimeError(
+            "Receptor protonation is disabled. The charged receptor file (rec.crg.pdb) "
+            "must be provided by the user and cannot be generated automatically. "
+            "Please ensure the rec.crg.pdb file exists in your working directory."
+        )
         super().__init__(
             working_dir=working_dir,
             infile_tuples=[

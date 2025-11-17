@@ -104,6 +104,8 @@ class Dockopt(Script):
     CONFIG_FILE_NAME = "dockopt_config.yaml"
     ACTIVES_TGZ_FILE_NAME = "actives.tgz"
     DECOYS_TGZ_FILE_NAME = "decoys.tgz"
+    RECEPTOR_PDB_FILE_NAME = "rec.crg.pdb"
+    LIGAND_PDB_FILE_NAME = "xtal-lig.pdb"
     DEFAULT_CONFIG_FILE_PATH = os.path.join(
         os.path.dirname(DOCKOPT_INIT_FILE_PATH), "default_dockopt_config.yaml"
     )
@@ -165,8 +167,13 @@ class Dockopt(Script):
             )
             for tgz_file_name in tgz_file_names_in_cwd:
                 job_dir.copy_in_file(tgz_file_name)
-        if tgz_file_names_not_in_cwd:
-            files_missing_str = "\n\t".join(tgz_file_names_not_in_cwd)
+
+        # receptor and ligand PDB files
+        pdb_files = [self.RECEPTOR_PDB_FILE_NAME, self.LIGAND_PDB_FILE_NAME]
+        pdb_file_names_not_in_cwd = [f for f in pdb_files if not os.path.isfile(f)]
+
+        if (tgz_file_names_not_in_cwd + pdb_file_names_not_in_cwd):
+            files_missing_str = "\n\t".join(tgz_file_names_not_in_cwd + pdb_file_names_not_in_cwd)
             logger.info(
                 f"The following required files were not found in current working directory. Be sure to add them manually to the job directory before running the job.\n\t{files_missing_str}"
             )
@@ -185,6 +192,8 @@ class Dockopt(Script):
         config_file_path: Optional[str] = None,
         actives_tgz_file_path: Optional[str] = None,
         decoys_tgz_file_path: Optional[str] = None,
+        receptor_pdb_file_path: Optional[str] = None,
+        ligand_pdb_file_path: Optional[str] = None,
         retrodock_job_max_reattempts: int = 0,
         allow_failed_retrodock_jobs: bool = False,
         retrodock_job_timeout_minutes: Optional[str] = None,
@@ -211,6 +220,10 @@ class Dockopt(Script):
             actives_tgz_file_path = os.path.join(job_dir_path, self.ACTIVES_TGZ_FILE_NAME)
         if decoys_tgz_file_path is None:
             decoys_tgz_file_path = os.path.join(job_dir_path, self.DECOYS_TGZ_FILE_NAME)
+        if receptor_pdb_file_path is None:
+            receptor_pdb_file_path = os.path.join(job_dir_path, self.RECEPTOR_PDB_FILE_NAME)
+        if ligand_pdb_file_path is None:
+            ligand_pdb_file_path = os.path.join(job_dir_path, self.LIGAND_PDB_FILE_NAME)
         try:
             File.validate_file_exists(config_file_path)
         except FileNotFoundError:
@@ -224,6 +237,17 @@ class Dockopt(Script):
                 "Actives TGZ file and/or decoys TGZ file not found. Did you put them in the job directory?\nNote: if you do not have actives and decoys, please use blastermaster instead of dockopt."
             )
             return
+        try:
+            File.validate_file_exists(receptor_pdb_file_path)
+        except FileNotFoundError:
+            logger.error("Charged receptor PDB file not found. Did you put it in the job directory?")
+            return
+        try:
+            File.validate_file_exists(ligand_pdb_file_path)
+        except FileNotFoundError:
+            logger.error("Ligand PDB file not found. Did you put it in the job directory?")
+            return
+
         if scheduler not in SCHEDULER_NAME_TO_CLASS_DICT:
             logger.error(
                 f"scheduler flag must be one of: {list(SCHEDULER_NAME_TO_CLASS_DICT.keys())}"

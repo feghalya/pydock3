@@ -70,27 +70,27 @@ def get_blaster_steps(blaster_files, flat_param_dict, working_dir):
     steps = []
 
     #
-    steps.append(
-        ReceptorMostOccupiedResiduesRenamingStep(
-            working_dir=working_dir,
-            receptor_infile=blaster_files.receptor_file,
-            receptor_most_occupied_residues_renamed_outfile=blaster_files.receptor_most_occupied_residues_renamed_file,
-        )
-    )
+    # steps.append(
+    #     ReceptorMostOccupiedResiduesRenamingStep(
+    #         working_dir=working_dir,
+    #         receptor_infile=blaster_files.receptor_file,
+    #         receptor_most_occupied_residues_renamed_outfile=blaster_files.receptor_most_occupied_residues_renamed_file,
+    #     )
+    # )
 
     #
-    steps.append(
-        ReceptorProtonationStep(
-            working_dir=working_dir,
-            receptor_infile=blaster_files.receptor_most_occupied_residues_renamed_file,
-            add_h_dict_infile=blaster_files.add_h_dict_file,
-            residue_code_polar_h_yaml_infile=blaster_files.residue_code_to_polar_h_yaml_file,
-            charged_receptor_outfile=blaster_files.charged_receptor_file,
-            reduce_options_parameter=flat_param_dict[
-                "receptor_protonation.reduce_options"
-            ],
-        )
-    )
+    # steps.append(
+    #     ReceptorProtonationStep(
+    #         working_dir=working_dir,
+    #         receptor_infile=blaster_files.receptor_most_occupied_residues_renamed_file,
+    #         add_h_dict_infile=blaster_files.add_h_dict_file,
+    #         residue_code_polar_h_yaml_infile=blaster_files.residue_code_to_polar_h_yaml_file,
+    #         charged_receptor_outfile=blaster_files.charged_receptor_file,
+    #         reduce_options_parameter=flat_param_dict[
+    #             "receptor_protonation.reduce_options"
+    #         ],
+    #     )
+    # )
 
     #
     if flat_param_dict["covalent.use"]:
