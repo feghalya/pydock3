@@ -786,14 +786,15 @@ class DockoptStep(PipelineComponent):
                         if submit_to_scheduler:
                             steps_to_run_scheduler.append((step_instance,step_id))
                         else:
-                            steps_to_run_sequentially.append(step_instance)
-            
+                            steps_to_run_sequentially.append((step_instance,step_id))
+
             for step_instance, step_id in steps_to_run_scheduler:
                 logger.info(f"Submitting {step_instance.__class__.__name__} to the scheduler")
                 scheduler.submit_single_step(step_instance, job_name=step_id)
-            
-            for step_instance in steps_to_run_sequentially:
-                step_instance.run()
+
+            if steps_to_run_sequentially:
+                sequential_scheduler = LocalJobScheduler()
+                sequential_scheduler.submit_multiple_steps(steps_to_run_sequentially)
 
             while any(scheduler.job_is_on_queue(step_id) for _, step_id in steps_to_run_scheduler):
                 logger.info(f"Waiting for jobs to complete...")

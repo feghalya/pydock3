@@ -281,6 +281,56 @@ class LocalJobScheduler(JobScheduler):
 
         return proc
 
+    def submit_multiple_steps(self,
+            step_instances_and_job_names: List[Tuple]
+    ) -> List[CompletedProcess]:
+        """
+        Submit multiple step instances for parallel execution using multiprocessing.
+
+        Args:
+            step_instances_and_job_names: List of tuples containing (step_instance, job_name)
+
+        Returns:
+            List of CompletedProcess objects for each step instance
+        """
+
+        # For single step, run directly without multiprocessing overhead
+        if len(step_instances_and_job_names) == 1:
+            step_instance, job_name = step_instances_and_job_names[0]
+            return self.submit_single_step(step_instance, job_name)
+
+        # Use multiprocessing for multiple steps
+        procs = []
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all steps
+            future_to_step = {
+                executor.submit(step_instance.run): (step_instance, job_name)
+                for step_instance, job_name in step_instances_and_job_names
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_step):
+                _, job_name = future_to_step[future]
+
+                try:
+                    future.result()
+                    returncode = 0
+                    stderr = ""
+                except Exception as e:
+                    # Create error process for failed steps
+                    returncode = 1
+                    stderr = f"Step {job_name} failed: {str(e)}"
+
+                proc = CompletedProcess(
+                    args=[job_name],
+                    returncode=returncode,
+                    stdout="",
+                    stderr=stderr
+                )
+                procs.append(proc)
+
+        return procs
+
     def job_is_on_queue(self, job_name: str) -> bool:
         # Local jobs run immediately, not queued
         return False
